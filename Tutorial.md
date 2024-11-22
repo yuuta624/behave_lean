@@ -123,8 +123,6 @@ Scenario: Stronger opponent
 
 ## Scenario Outlines
 
-Sometimes a scenario should be run with a number of variables giving a set of known states, actions to take and expected outcomes, all using the same basic actions. You may use a Scenario Outline to achieve this:
-
 場合によっては、一連の既知の状態、実行するアクション、および予想される結果を示す多数の変数を使用してシナリオを実行する必要がありますが、その場合はすべて同じ基本アクションを使用します。これを実現するには、シナリオ アウトラインを使用できます。
 
 ```python
@@ -185,24 +183,26 @@ def step_impl(context):
     for row in context.table:
         model.add_user(name=row['name'], department=row['department'])
 ```
-There’s a variety of ways to access the table data - see the Table API documentation for the full details.
+テーブル データにアクセスする方法はさまざまです。詳細については、Table API ドキュメントを参照してください。
 
-Python Step Implementations
-Steps used in the scenarios are implemented in Python files in the “steps” directory. You can call these whatever you like as long as they use the python *.py file extension. You don’t need to tell behave which ones to use - it’ll use all of them.
+## Python ステップの実装
 
-The full detail of the Python side of behave is in the API documentation.
+シナリオで使用されるステップは、「steps」ディレクトリの Python ファイルで実装されています。python `*.py` ファイル拡張子を使用する限り、好きなように呼び出すことができます。behave にどのステップを使用するか指示する必要はありません。behave はすべてを使用します。
 
-Steps are identified using decorators which match the predicate from the feature file: given, when, then and step (variants with Title case are also available if that’s your preference.) The decorator accepts a string containing the rest of the phrase used in the scenario step it belongs to.
+behave の Python 側の詳細については、[API ドキュメント](https://behave.readthedocs.io/en/stable/api.html)を参照してください。
+
+ステップは、機能ファイルの述語に一致するデコレータを使用して識別されます。**given** 、**when** 、**then** 、**step** です (必要に応じて、タイトル ケースのバリアントも使用できます)。デコレータは、属するシナリオ ステップで使用されるフレーズの残りの部分を含む文字列を受け入れます。
 
 Given a Scenario:
 
+シナリオが与えられた場合:
 ```
 Scenario: Search for an account
    Given I search for a valid account
     Then I will see the account details
 ```
 
-Step code implementing the two steps here might look like (using selenium webdriver and some other helpers):
+ここでの 2 つのステップを実装するステップ コードは次のようになります (Selenium WebDriver とその他のヘルパーを使用)。
 
 ```
 @given('I search for a valid account')
@@ -221,15 +221,15 @@ def step_impl(context):
         'Heading %r has wrong text' % h.text)
 ```
 
-The step decorator matches the step to any step type, “given”, “when” or “then”. The “and” and “but” step types are renamed internally to take the preceding step’s keyword (so an “and” following a “given” will become a “given” internally and use a given decorated step).
+ `step `デコレータは、ステップを「given」、「when」、または「then」のいずれかのステップ タイプに一致させます。「and」および「but」ステップ タイプは、先行するステップのキーワードを取得するために内部的に名前が変更されます (したがって、「given」に続く「and」は内部的に「given」になり、指定されたデコレータ ステップを使用します)。
 
-Note
+注
 
-Step function names do not need to have a unique symbol name, because the text matching selects the step function from the step registry before it is called as anonymous function. Hence, when behave prints out the missing step implementations in a test run, it uses “step_impl” for all functions by default.
+ステップ関数名には一意のシンボル名は必要ありません。これは、テキスト マッチングによってステップ関数が匿名関数として呼び出される前にステップ レジストリから選択されるためです。したがって、behave がテスト実行で不足しているステップ実装を出力する場合、デフォルトですべての関数に「step_impl」が使用されます。
 
-If you find you’d like your step implementation to invoke another step you may do so with the Context method execute_steps().
+ステップ実装で別のステップを呼び出したい場合は、コンテキスト メソッド execute_steps() で実行できます。
 
-This function allows you to, for example:
+この関数を使用すると、たとえば次のことが可能になります。
 
 ```
 @when('I do the same thing as before')
@@ -240,10 +240,11 @@ def step_impl(context):
     ''')
 ```
 
-This will cause the “when I do the same thing as before” step to execute the other two steps as though they had also appeared in the scenario file.
+これにより、「以前と同じ操作を実行したとき」のステップでは、他の 2 つのステップもシナリオ ファイルに記述されているかのように実行されます。
 
-Step Parameters
-You may find that your feature steps sometimes include very common phrases with only some variation. For example:
+## Step パラメータ
+
+機能ステップに、ごくわずかなバリエーションしかない非常に一般的なフレーズが含まれている場合があります。例:
 
 ```
 Scenario: look up a book
@@ -253,47 +254,56 @@ Scenario: look up a book
 Scenario: look up an invalid book
   Given I search for a invalid book
    Then the result page will include "failure"
-You may define a single Python step that handles both of those Then clauses (with a Given step that puts some text into context.response):
+```
 
+これらの Then 句の両方を処理する単一の Python ステップを定義できます (`context.response` にテキストを配置する Given ステップを使用)。
+```
 @then('the result page will include "{text}"')
 def step_impl(context, text):
     if text not in context.response:
         fail('%r not in %r' % (text, context.response))
 ```
-There are several parsers available in behave (by default):
+behave には、デフォルトでいくつかのパーサーが用意されています:
 
-parse (the default, based on: parse)
-Provides a simple parser that replaces regular expressions for step parameters with a readable syntax like {param:Type}. The syntax is inspired by the Python builtin string.format() function. Step parameters must use the named fields syntax of parse in step definitions. The named fields are extracted, optionally type converted and then used as step function arguments.
+**parse (デフォルト、[parse](https://pypi.python.org/pypi/parse) に基づく)**
 
-Supports type conversions by using type converters (see register_type()).
+ステップ パラメータの正規表現を `{param:Type}` のような読みやすい構文に置き換えるシンプルなパーサーを提供します。この構文は、Python 組み込みの `string.format()` 関数にヒントを得ています。ステップ パラメータは、ステップ定義で parse の名前付きフィールド構文を使用する必要があります。名前付きフィールドは抽出され、オプションで型変換されてから、ステップ関数の引数として使用されます。
 
-cfparse (extends: parse, requires: parse_type)
-Provides an extended parser with “Cardinality Field” (CF) support. Automatically creates missing type converters for related cardinality as long as a type converter for cardinality=1 is provided. Supports parse expressions like:
+型コンバーターを使用して型変換をサポートします `(register_type()` を参照)。
 
-{values:Type+} (cardinality=1..N, many)
-{values:Type*} (cardinality=0..N, many0)
-{value:Type?} (cardinality=0..1, optional).
-Supports type conversions (as above).
+**cfparse (拡張: parse、必須: parse_type)**
 
-re
-This uses full regular expressions to parse the clause text. You will need to use named groups “(?P<name>…)” to define the variables pulled from the text and passed to your step() function.
+「カーディナリティ フィールド」(CF) をサポートする拡張パーサーを提供します。カーディナリティ = 1 の型コンバーターが提供されている限り、関連するカーディナリティの不足している型コンバーターを自動的に作成します。次のような解析式をサポートします:
 
-Type conversion is not supported. A step function writer may implement type conversion inside the step function (implementation).
+`{values:Type+}` (cardinality=1..N, many)
 
-To specify which parser to use invoke use_step_matcher() with the name of the matcher to use. You may change matcher to suit specific step functions - the last call to use_step_matcher before a step function declaration will be the one it uses.
+`{values:Type*}` (cardinality=0..N, many0)
 
-Note
+`{value:Type?}` (cardinality=0..1, optional).
 
-The function step_matcher() is becoming deprecated. Use use_step_matcher() instead.
+型変換をサポートします (上記と同じ)。
 
-Context
-You’ll have noticed the “context” variable that’s passed around. It’s a clever place where you and behave can store information to share around. It runs at three levels, automatically managed by behave.
+**re**
 
-When behave launches into a new feature or scenario it adds a new layer to the context, allowing the new activity level to add new values, or overwrite ones previously defined, for the duration of that activity. These can be thought of as scopes.
+これは完全な正規表現を使用して句のテキストを解析します。テキストから取得され、`step()` 関数に渡される変数を定義するには、名前付きグループ「(?P<name>…)」を使用する必要があります。
 
-You can define values in your environmental controls file which may be set at the feature level and then overridden for some scenarios. Changes made at the scenario level won’t permanently affect the value set at the feature level.
+**型変換はサポートされていません。** ステップ関数の作成者は、ステップ関数内で型変換を実装できます (実装)。
 
-You may also use it to share values between steps. For example, in some steps you define you might have:
+使用するパーサーを指定するには、使用するマッチャーの名前を指定して `use_step_matcher()` を呼び出します。特定のステップ関数に合わせてマッチャーを変更できます。ステップ関数宣言の前の `use_step_matcher` への最後の呼び出しが、使用されるものになります。
+
+注意
+
+関数 `step_matcher()` は廃止される予定です。代わりに `use_step_matcher()` を使用してください。
+
+**Context**
+
+渡される`context`変数に気付いたでしょう。これは、あなたと behave が共有する情報を保存できる賢い場所です。これは 3 つのレベルで実行され、behave によって自動的に管理されます。
+
+behave が新しい機能またはシナリオを開始すると、コンテキストに新しいレイヤーが追加され、そのアクティビティの期間中、新しいアクティビティ レベルで新しい値を追加したり、以前に定義された値を上書きしたりできるようになります。これらはスコープと考えることができます。
+
+環境制御ファイルで値を定義できます。この値は機能レベルで設定され、その後一部のシナリオで上書きされる場合があります。シナリオ レベルで行われた変更は、機能レベルで設定された値に永続的に影響しません。
+
+また、ステップ間で値を共有するために使用することもできます。たとえば、定義する一部のステップでは、次のようになります。
 
 ```
 @given('I request a new widget for an account via SOAP')
@@ -306,40 +316,64 @@ def step_impl(context):
 def step_impl(context):
     eq_(context.response['ok'], 1)
 ```
-There’s also some values added to the context by behave itself:
+behave 自体によってコンテキストに追加される値もいくつかあります:
 
-table
-This holds any table data associated with a step.
-text
-This holds any multi-line text associated with a step.
-failed
-This is set at the root of the context when any step fails. It is sometimes useful to use this combined with the --stop command-line option to prevent some mis-behaving resource from being cleaned up in an after_feature() or similar (for example, a web browser being driven by Selenium.)
-The context variable in all cases is an instance of behave.runner.Context.
+**table**
 
-Environmental Controls
-The environment.py module may define code to run before and after certain events during your testing:
+ステップに関連付けられたテーブル データを保持します。
 
-before_step(context, step), after_step(context, step)
-These run before and after every step.
-before_scenario(context, scenario), after_scenario(context, scenario)
-These run before and after each scenario is run.
-before_feature(context, feature), after_feature(context, feature)
-These run before and after each feature file is exercised.
-before_tag(context, tag), after_tag(context, tag)
-These run before and after a section tagged with the given name. They are invoked for each tag encountered in the order they’re found in the feature file. See controlling things with tags.
-before_all(context), after_all(context)
-These run before and after the whole shooting match.
-The feature, scenario and step objects represent the information parsed from the feature file. They have a number of attributes:
+**text**
 
-keyword
+ステップに関連付けられた複数行のテキストを保持します。
+
+**failed**
+
+これは、いずれかのステップが失敗したときにコンテキストのルートに設定されます。これを `--stop` コマンドライン オプションと組み合わせて使用​​すると、動作が不適切なリソースが `after_feature()` などでクリーンアップされるのを防ぐのに役立つ場合があります (たとえば、Selenium によって駆動される Web ブラウザーなど)。
+すべての場合のコンテキスト変数は、`behave.runner.Context` のインスタンスです。
+
+## Environmental Controls
+
+environment.py モジュールは、テスト中に特定のイベントの前後に実行するコードを定義できます:
+
+**before_step(context, step)、after_step(context, step)**
+
+これらは各ステップの前後に実行されます。
+
+**before_scenario(context, scene)、after_scenario(context, scene)**
+
+これらは各シナリオの実行前と実行後に実行されます。
+
+**before_feature(context, feature)、after_feature(context, feature)**
+
+これらは、各機能ファイルが実行される前と後に実行されます。
+
+**before_tag(context, tag)、after_tag(context, tag)**
+
+これらは、指定された名前でタグ付けされたセクションの前と後に実行されます。これらは、機能ファイル内で見つかった順序で、遭遇したタグごとに呼び出されます[タグによる制御](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)を参照してください。
+
+**before_all(context), after_all(context)**
+
+これらは、射撃試合全体の前と後に実行されます。
+
+フィーチャ、シナリオ、およびステップ オブジェクトは、フィーチャ ファイルから解析された情報を表します。これらには、いくつかの属性があります:
+
+**キーワード**
+
 “Feature”, “Scenario”, “Given”, etc.
-name
-The name of the step (the text after the keyword.)
-tags
-A list of the tags attached to the section or step. See controlling things with tags.
-filename and line
-The file name (or “<string>”) and line number of the statement.
-A common use-case for environmental controls might be to set up a web server and browser to run all your tests in. For example:
+
+**name**
+
+ステップの名前 (キーワードの後のテキスト)
+
+**tags**
+
+セクションまたはステップに添付されたタグのリスト。[タグによる制御](https://behave.readthedocs.io/en/stable/tutorial.html#controlling-things-with-tags)を参照してください。
+
+**filename と line**
+
+ステートメントのファイル名 (または「<string>」) と行番号。
+
+環境制御の一般的な使用例としては、すべてのテストを実行するための Web サーバーとブラウザーをセットアップすることが挙げられます。例:
 
 ```
 # -- FILE: features/environment.py
@@ -362,6 +396,8 @@ def before_all(context):
 
 def before_feature(context, feature):
     model.init(environment='test')
+```
+```
 # -- FILE: behave4my_project/fixtures.py
 # ALTERNATIVE: Place fixture in "features/environment.py" (but reuse is harder)
 from behave import fixture
@@ -382,10 +418,11 @@ def wsgi_server(context, port=8000):
     context.thread.join()
 
 ```
-Of course, if you wish, you could have a new browser for each feature, or to retain the database state between features or even initialise the database for each scenario.
+もちろん、必要に応じて、機能ごとに新しいブラウザを用意したり、機能間でデータベースの状態を保持したり、シナリオごとにデータベースを初期化したりすることもできます。
 
-Controlling Things With Tags
-You may also “tag” parts of your feature file. At the simplest level this allows behave to selectively check parts of your feature set.
+## タグによる制御
+
+機能ファイルの一部に「タグ」を付けることもできます。最も単純なレベルでは、これにより Behave が機能セットの一部を選択的にチェックできるようになります。
 
 Given a feature file with:
 
