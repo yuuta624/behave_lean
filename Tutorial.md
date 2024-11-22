@@ -162,7 +162,7 @@ Scenario: some scenario
 
 ステップの後にインデントして入力するだけで、データ テーブルをステップに関連付けることもできます。これは、必要な特定のデータをモデルに読み込む場合に便利です。
 
-```
+```python
 Scenario: some scenario
   Given a set of specific users
      | name      | department  |
@@ -177,7 +177,7 @@ Scenario: some scenario
 
 テーブルは、各ステップ関数に渡されるコンテキスト変数の「.table」属性として、Python ステップ コードで使用できます。上記の例のテーブルには、次のようにアクセスできます。
 
-```
+```python
 @given('a set of specific users')
 def step_impl(context):
     for row in context.table:
@@ -196,7 +196,7 @@ behave の Python 側の詳細については、[API ドキュメント](https:/
 Given a Scenario:
 
 シナリオが与えられた場合:
-```
+```python
 Scenario: Search for an account
    Given I search for a valid account
     Then I will see the account details
@@ -204,7 +204,7 @@ Scenario: Search for an account
 
 ここでの 2 つのステップを実装するステップ コードは次のようになります (Selenium WebDriver とその他のヘルパーを使用)。
 
-```
+```python
 @given('I search for a valid account')
 def step_impl(context):
     context.browser.get('http://localhost:8000/index')
@@ -231,7 +231,7 @@ def step_impl(context):
 
 この関数を使用すると、たとえば次のことが可能になります。
 
-```
+```python
 @when('I do the same thing as before')
 def step_impl(context):
     context.execute_steps('''
@@ -246,7 +246,7 @@ def step_impl(context):
 
 機能ステップに、ごくわずかなバリエーションしかない非常に一般的なフレーズが含まれている場合があります。例:
 
-```
+```python
 Scenario: look up a book
   Given I search for a valid book
    Then the result page will include "success"
@@ -257,7 +257,7 @@ Scenario: look up an invalid book
 ```
 
 これらの Then 句の両方を処理する単一の Python ステップを定義できます (`context.response` にテキストを配置する Given ステップを使用)。
-```
+```python
 @then('the result page will include "{text}"')
 def step_impl(context, text):
     if text not in context.response:
@@ -305,7 +305,7 @@ behave が新しい機能またはシナリオを開始すると、コンテキ�
 
 また、ステップ間で値を共有するために使用することもできます。たとえば、定義する一部のステップでは、次のようになります。
 
-```
+```python
 @given('I request a new widget for an account via SOAP')
 def step_impl(context):
     client = Client("http://127.0.0.1:8000/soap/")
@@ -375,7 +375,7 @@ environment.py モジュールは、テスト中に特定のイベントの前�
 
 環境制御の一般的な使用例としては、すべてのテストを実行するための Web サーバーとブラウザーをセットアップすることが挙げられます。例:
 
-```
+```python
 # -- FILE: features/environment.py
 from behave import fixture, use_fixture
 from behave4my_project.fixtures import wsgi_server
@@ -397,7 +397,7 @@ def before_all(context):
 def before_feature(context, feature):
     model.init(environment='test')
 ```
-```
+```python
 # -- FILE: behave4my_project/fixtures.py
 # ALTERNATIVE: Place fixture in "features/environment.py" (but reuse is harder)
 from behave import fixture
@@ -426,7 +426,7 @@ def wsgi_server(context, port=8000):
 
 Given a feature file with:
 
-```
+```python
 Feature: Fight or flight
   In order to increase the ninja survival rate,
   As a ninja commander
@@ -445,24 +445,29 @@ Feature: Fight or flight
     Then the ninja should run for his life
 ```
 
-then running behave --tags=slow will run just the scenarios tagged @slow. If you wish to check everything except the slow ones then you may run behave --tags=-slow.
+次に、`behave --tags=slow` を実行すると、`@slow` のタグが付けられたシナリオのみが実行されます。遅いシナリオ以外をすべてチェックしたい場合は、`behave --tags=-slow` を実行できます。
 
-Another common use-case is to tag a scenario you’re working on with @wip and then behave --tags=wip to just test that one case.
+もう 1 つの一般的な使用例は、作業中のシナリオに `@wip` のタグを付け、`behave --tags=wip` を実行してその 1 つのケースだけをテストすることです。
 
-Tag selection on the command-line may be combined:
+コマンド ラインでのタグ選択は組み合わせることができます:
 
---tags=wip,slow
-This will select all the cases tagged either “wip” or “slow”.
---tags=wip --tags=slow
-This will select all the cases tagged both “wip” and “slow”.
-If a feature or scenario is tagged and then skipped because of a command-line control then the before_ and after_ environment functions will not be called for that feature or scenario. Note that behave has additional support specifically for testing works in progress.
+- `--tags=wip,slow`
 
-The tags attached to a feature and scenario are available in the environment functions via the “feature” or “scenario” object passed to them. On those objects there is an attribute called “tags” which is a list of the tag names attached, in the order they’re found in the features file.
+これにより、「wip」または「slow」のタグが付けられたすべてのケースが選択されます。
 
-There are also environmental controls specific to tags, so in the above example behave will attempt to invoke an environment.py function before_tag and after_tag before and after the Scenario tagged @slow, passing in the name “slow”. If multiple tags are present then the functions will be called multiple times with each tag in the order they’re defined in the feature file.
+- `--tags=wip --tags=slow`
 
-Re-visiting the example from above; if only some of the features required a browser and web server then you could tag them @browser:
-```
+これにより、「wip」と「slow」の両方のタグが付けられたすべてのケースが選択されます。
+
+機能またはシナリオにタグが付けられ、その後コマンドライン制御によってスキップされた場合、その機能またはシナリオに対して before_ および after_ 環境関数は呼び出されません。behave には、進行中の作業をテストするための追加サポートがあることに注意してください。
+
+機能とシナリオに添付されたタグは、渡された「feature」または「scenario」オブジェクトを介して環境関数で使用できます。これらのオブジェクトには、「tags」という属性があり、これは、features ファイルで見つかった順序で添付されたタグ名のリストです。
+
+タグに固有の環境制御もあるため、上記の例では、behave は、`@slow` でタグ付けされたシナリオの前後に `environment.py` 関数 `before_tag` および `after_tag` を呼び出して、名前「slow」を渡そうとします。複数のタグが存在する場合、関数は、機能ファイルで定義されている順序で各タグを使用して複数回呼び出されます。
+
+上記の例をもう一度見てみましょう。一部の機能のみがブラウザーと Web サーバーを必要とする場合は、`@browser` でタグ付けできます。
+
+```python
 # -- FILE: features/environment.py
 # HINT: Reusing some code parts from above.
 ...
@@ -473,27 +478,27 @@ def before_feature(context, feature):
         use_fixture(wsgi_server, context)
         use_fixture(selenium_browser_chrome, context)
 ```
-Works In Progress
-behave supports the concept of a highly-unstable “work in progress” scenario that you’re actively developing. This scenario may produce strange logging, or odd output to stdout or just plain interact in unexpected ways with behave’s scenario runner.
+## 進行中の作業
 
-To make testing such scenarios simpler we’ve implemented a “-w” command-line flag. This flag:
+behave は、現在開発中の非常に不安定な「進行中の作業」シナリオの概念をサポートします。このシナリオでは、奇妙なログや stdout への奇妙な出力が生成されたり、behave のシナリオ ランナーと予期しない方法で単純に相互作用したりする可能性があります。
 
-turns off stdout capture
+このようなシナリオのテストを簡単にするために、「-w」コマンドライン フラグを実装しました。このフラグは、次のようになります:
 
-turns off logging capture; you will still need to configure your own logging handlers - we recommend a before_all() with:
-
+1. stdout キャプチャをオフにします
+1. ログ キャプチャをオフにします。独自のログ ハンドラーを構成する必要があります。before_all() を次のように構成することをお勧めします:
+```python
 if not context.config.log_capture:
     logging.basicConfig(level=logging.DEBUG)
-turns off pretty output - no ANSI escape sequences to confuse your scenario’s output
-
-only runs scenarios tagged with “@wip”
-
-stops at the first error
-
-Fixtures
-Fixtures simplify the setup/cleanup tasks that are often needed during test execution.
-
 ```
+3. きれいな出力をオフにします - シナリオの出力を混乱させる ANSI エスケープ シーケンスはありません
+1. 「@wip」タグのシナリオのみを実行します
+1. 最初のエラーで停止します
+
+## Fixtures
+
+フィクスチャは、テスト実行中に頻繁に必要となるセットアップ/クリーンアップ タスクを簡素化します。
+
+```python
 # -- FILE: behave4my_project/fixtures.py  (or in: features/environment.py)
 from behave import fixture
 from somewhere.browser.firefox import FirefoxBrowser
@@ -506,17 +511,19 @@ def browser_firefox(context, timeout=30, **kwargs):
     yield context.browser
     # -- CLEANUP-FIXTURE PART:
     context.browser.shutdown()
-See Fixtures for more information.
 ```
+詳細については、Fixtures を参照してください。
 
-Debug-on-Error (in Case of Step Failures)
-A “debug on error/failure” functionality can easily be provided, by using the after_step() hook. The debugger is started when a step fails.
+## エラー時のデバッグ (ステップが失敗した場合)
 
-It is in general a good idea to enable this functionality only when needed (in interactive mode). The functionality is enabled (in this example) by using the user-specific configuration data. A user can:
+`after_step()` フックを使用すると、「エラー/失敗時のデバッグ」機能を簡単に提供できます。ステップが失敗するとデバッガーが起動します。
 
-provide a userdata define on command-line
-store a value in the “behave.userdata” section of behave’s configuration file
-```
+一般的に、この機能は必要なときだけ (対話モードで) 有効にするのがよいでしょう。この機能は (この例では) ユーザー固有の構成データを使用して有効になります。ユーザーは次の操作を実行できます。
+
+- コマンドラインでユーザーデータ定義を提供する
+- behave の構成ファイルの「behave.userdata」セクションに値を保存する
+
+```python
 # -- FILE: features/environment.py
 # USE: behave -D BEHAVE_DEBUG_ON_ERROR         (to enable  debug-on-error)
 # USE: behave -D BEHAVE_DEBUG_ON_ERROR=yes     (to enable  debug-on-error)
@@ -536,6 +543,5 @@ def after_step(context, step):
         # -- ENTER DEBUGGER: Zoom in on failure location.
         # NOTE: Use IPython debugger, same for pdb (basic python debugger).
         import ipdb
-```
-
         ipdb.post_mortem(step.exc_traceback)
+```
