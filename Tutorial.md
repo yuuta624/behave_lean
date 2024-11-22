@@ -106,18 +106,28 @@ Feature: Fight or flight
 
 **「Then」** では、結果を観察します。
 
-You may also include “And” or “But” as a step - these are renamed by behave to take the name of their preceding step, so:
+ステップとして「And」または「But」を含めることもできます。これらは、behave によって名前が変更され、前のステップの名前が取得されます。つまり、次のようになります。
 
+```python
 Scenario: Stronger opponent
   Given the ninja has a third level black-belt
    When attacked by Chuck Norris
    Then the ninja should run for his life
     And fall off a cliff
-In this case behave will look for a step definition for "Then fall off a cliff".
+```
 
-Scenario Outlines
+
+この場合、behaveはステップ定義を探します。
+
+`"Then fall off a cliff".`
+
+## Scenario Outlines
+
 Sometimes a scenario should be run with a number of variables giving a set of known states, actions to take and expected outcomes, all using the same basic actions. You may use a Scenario Outline to achieve this:
 
+場合によっては、一連の既知の状態、実行するアクション、および予想される結果を示す多数の変数を使用してシナリオを実行する必要がありますが、その場合はすべて同じ基本アクションを使用します。これを実現するには、シナリオ アウトラインを使用できます。
+
+```python
 Scenario Outline: Blenders
    Given I put <thing> in a blender,
     when I switch the blender on
@@ -131,13 +141,15 @@ Scenario Outline: Blenders
    | thing         | other thing |
    | iPhone        | toxic waste |
    | Galaxy Nexus  | toxic waste |
-behave will run the scenario once for each (non-heading) line appearing in the example data tables.
+```
 
-Step Data
-Sometimes it’s useful to associate a table of data with your step.
+behave は、サンプル データ テーブルに表示される各 (見出し以外の) 行に対してシナリオを 1 回実行します。
 
-Any text block following a step wrapped in """ lines will be associated with the step. For example:
+## Step Data
+データ テーブルをステップに関連付けると便利な場合があります。
 
+ステップに続く """ 行で囲まれたテキスト ブロックは、ステップに関連付けられます。例:
+```python
 Scenario: some scenario
   Given a sample text loaded into the frobulator
      """
@@ -146,10 +158,13 @@ Scenario: some scenario
      """
  When we activate the frobulator
  Then we will find it similar to English
-The text is available to the Python step code as the “.text” attribute in the Context variable passed into each step function.
+```
 
-You may also associate a table of data with a step by simply entering it, indented, following the step. This can be useful for loading specific required data into a model.
+テキストは、各ステップ関数に渡される  変数の「.text」属性として、Python ステップ コードで使用できます。
 
+ステップの後にインデントして入力するだけで、データ テーブルをステップに関連付けることもできます。これは、必要な特定のデータをモデルに読み込む場合に便利です。
+
+```
 Scenario: some scenario
   Given a set of specific users
      | name      | department  |
@@ -160,12 +175,16 @@ Scenario: some scenario
  When we count the number of people in each department
  Then we will find two people in "Silly Walks"
   But we will find one person in "Beer Cans"
-The table is available to the Python step code as the “.table” attribute in the Context variable passed into each step function. The table for the example above could be accessed like so:
+```
 
+テーブルは、各ステップ関数に渡されるコンテキスト変数の「.table」属性として、Python ステップ コードで使用できます。上記の例のテーブルには、次のようにアクセスできます。
+
+```
 @given('a set of specific users')
 def step_impl(context):
     for row in context.table:
         model.add_user(name=row['name'], department=row['department'])
+```
 There’s a variety of ways to access the table data - see the Table API documentation for the full details.
 
 Python Step Implementations
@@ -177,11 +196,15 @@ Steps are identified using decorators which match the predicate from the feature
 
 Given a Scenario:
 
+```
 Scenario: Search for an account
    Given I search for a valid account
     Then I will see the account details
+```
+
 Step code implementing the two steps here might look like (using selenium webdriver and some other helpers):
 
+```
 @given('I search for a valid account')
 def step_impl(context):
     context.browser.get('http://localhost:8000/index')
@@ -196,6 +219,8 @@ def step_impl(context):
     h = get_element(context.browser, id='account-head')
     ok_(h.text.startswith("Account 61415551234"),
         'Heading %r has wrong text' % h.text)
+```
+
 The step decorator matches the step to any step type, “given”, “when” or “then”. The “and” and “but” step types are renamed internally to take the preceding step’s keyword (so an “and” following a “given” will become a “given” internally and use a given decorated step).
 
 Note
@@ -206,17 +231,21 @@ If you find you’d like your step implementation to invoke another step you may
 
 This function allows you to, for example:
 
+```
 @when('I do the same thing as before')
 def step_impl(context):
     context.execute_steps('''
         when I press the big red button
          and I duck
     ''')
+```
+
 This will cause the “when I do the same thing as before” step to execute the other two steps as though they had also appeared in the scenario file.
 
 Step Parameters
 You may find that your feature steps sometimes include very common phrases with only some variation. For example:
 
+```
 Scenario: look up a book
   Given I search for a valid book
    Then the result page will include "success"
@@ -230,6 +259,7 @@ You may define a single Python step that handles both of those Then clauses (wit
 def step_impl(context, text):
     if text not in context.response:
         fail('%r not in %r' % (text, context.response))
+```
 There are several parsers available in behave (by default):
 
 parse (the default, based on: parse)
@@ -265,6 +295,7 @@ You can define values in your environmental controls file which may be set at th
 
 You may also use it to share values between steps. For example, in some steps you define you might have:
 
+```
 @given('I request a new widget for an account via SOAP')
 def step_impl(context):
     client = Client("http://127.0.0.1:8000/soap/")
@@ -274,6 +305,7 @@ def step_impl(context):
 @then('I should receive an OK SOAP response')
 def step_impl(context):
     eq_(context.response['ok'], 1)
+```
 There’s also some values added to the context by behave itself:
 
 table
@@ -309,6 +341,7 @@ filename and line
 The file name (or “<string>”) and line number of the statement.
 A common use-case for environmental controls might be to set up a web server and browser to run all your tests in. For example:
 
+```
 # -- FILE: features/environment.py
 from behave import fixture, use_fixture
 from behave4my_project.fixtures import wsgi_server
@@ -347,6 +380,8 @@ def wsgi_server(context, port=8000):
     # -- CLEANUP-FIXTURE PART:
     context.server.shutdown()
     context.thread.join()
+
+```
 Of course, if you wish, you could have a new browser for each feature, or to retain the database state between features or even initialise the database for each scenario.
 
 Controlling Things With Tags
@@ -354,6 +389,7 @@ You may also “tag” parts of your feature file. At the simplest level this al
 
 Given a feature file with:
 
+```
 Feature: Fight or flight
   In order to increase the ninja survival rate,
   As a ninja commander
@@ -370,6 +406,8 @@ Feature: Fight or flight
     Given the ninja has a third level black-belt
     When attacked by Chuck Norris
     Then the ninja should run for his life
+```
+
 then running behave --tags=slow will run just the scenarios tagged @slow. If you wish to check everything except the slow ones then you may run behave --tags=-slow.
 
 Another common use-case is to tag a scenario you’re working on with @wip and then behave --tags=wip to just test that one case.
@@ -387,7 +425,7 @@ The tags attached to a feature and scenario are available in the environment fun
 There are also environmental controls specific to tags, so in the above example behave will attempt to invoke an environment.py function before_tag and after_tag before and after the Scenario tagged @slow, passing in the name “slow”. If multiple tags are present then the functions will be called multiple times with each tag in the order they’re defined in the feature file.
 
 Re-visiting the example from above; if only some of the features required a browser and web server then you could tag them @browser:
-
+```
 # -- FILE: features/environment.py
 # HINT: Reusing some code parts from above.
 ...
@@ -397,6 +435,7 @@ def before_feature(context, feature):
     if 'browser' in feature.tags:
         use_fixture(wsgi_server, context)
         use_fixture(selenium_browser_chrome, context)
+```
 Works In Progress
 behave supports the concept of a highly-unstable “work in progress” scenario that you’re actively developing. This scenario may produce strange logging, or odd output to stdout or just plain interact in unexpected ways with behave’s scenario runner.
 
@@ -417,6 +456,7 @@ stops at the first error
 Fixtures
 Fixtures simplify the setup/cleanup tasks that are often needed during test execution.
 
+```
 # -- FILE: behave4my_project/fixtures.py  (or in: features/environment.py)
 from behave import fixture
 from somewhere.browser.firefox import FirefoxBrowser
@@ -430,6 +470,7 @@ def browser_firefox(context, timeout=30, **kwargs):
     # -- CLEANUP-FIXTURE PART:
     context.browser.shutdown()
 See Fixtures for more information.
+```
 
 Debug-on-Error (in Case of Step Failures)
 A “debug on error/failure” functionality can easily be provided, by using the after_step() hook. The debugger is started when a step fails.
@@ -438,6 +479,7 @@ It is in general a good idea to enable this functionality only when needed (in i
 
 provide a userdata define on command-line
 store a value in the “behave.userdata” section of behave’s configuration file
+```
 # -- FILE: features/environment.py
 # USE: behave -D BEHAVE_DEBUG_ON_ERROR         (to enable  debug-on-error)
 # USE: behave -D BEHAVE_DEBUG_ON_ERROR=yes     (to enable  debug-on-error)
@@ -457,4 +499,6 @@ def after_step(context, step):
         # -- ENTER DEBUGGER: Zoom in on failure location.
         # NOTE: Use IPython debugger, same for pdb (basic python debugger).
         import ipdb
+```
+
         ipdb.post_mortem(step.exc_traceback)
